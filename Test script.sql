@@ -1,2 +1,2 @@
 select 'Hello World!'
-select 42
+select 40 + 2
