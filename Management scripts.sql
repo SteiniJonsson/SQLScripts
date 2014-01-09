@@ -20,7 +20,7 @@ join    ReportServer..Schedule      sc  on  rs.ScheduleID = sc.ScheduleID
 join    ReportServer..Subscriptions s   on  rs.SubscriptionID = s.SubscriptionID 
 join    ReportServer..[Catalog]     c   on  rs.ReportID = c.ItemID 
                                         and s.Report_OID = c.ItemID
-join    msdb..sysjobs               j   on  sc.ScheduleID = j.job_id
+join    msdb..sysjobs               j   on  convert ( sysname, sc.ScheduleID ) = j.name
 
 ----------------------------------------------------------------------------------------------------
 -- 
