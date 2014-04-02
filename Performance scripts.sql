@@ -16,5 +16,15 @@ dbcc freeproccache
 exec sp_updatestats
 
 ----------------------------------------------------------------------------------------------------
+-- List index fragmentations
+----------------------------------------------------------------------------------------------------
+select object_name ( object_id )
+     , index_id,index_type_desc,index_level
+     , avg_fragmentation_in_percent
+     , avg_page_space_used_in_percent
+     , page_count
+from   sys.dm_db_index_physical_stats(db_id(), null, null, null , null );
+
+----------------------------------------------------------------------------------------------------
 -- 
 ----------------------------------------------------------------------------------------------------
