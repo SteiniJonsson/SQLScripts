@@ -98,6 +98,7 @@ with cte as
 )
 select   [Object name]
        , [Index name]
+       , [Index type]
        , [Filegroup name]
        , convert ( decimal ( 20, 2 )
                  , sum ( [Index size in KB] / 1024.0 ) 
@@ -105,4 +106,5 @@ select   [Object name]
 from     cte
 group by [Object name]
        , [Index name]
+       , [Index type]
        , [Filegroup name]
