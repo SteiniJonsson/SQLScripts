@@ -38,5 +38,58 @@ select * from cte
 where [Object name] = '<TableName>'
 
 ----------------------------------------------------------------------------------------------------
+-- Compare two methods of deleting duplicate rows from a table.
+----------------------------------------------------------------------------------------------------
+use Steini;
+drop table DuplData
+create table DuplData
+(
+  Id       int            not null,
+  FullName varchar ( 50 ) not null
+
+  constraint PK_DuplData_Id primary key clustered ( Id ),
+  index idxNafn ( FullName )
+)
+
+insert DuplData values ( 1, 'Steini' )
+insert DuplData values ( 2, 'Eggert' )
+insert DuplData values ( 3, 'Keli' )
+insert DuplData values ( 4, 'Steini' )
+
+select * from DuplData;
+
+set statistics io on
+
+with cte
+as 
+(
+  select Id
+       , FullName
+       , row_number() over ( partition by FullName
+                             order by     FullName
+                           ) as RowNr
+  from DuplData
+)
+delete
+from   cte
+where  RowNr != 1
+-- Table 'DuplData'. Scan count 1, logical reads 8, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+
+delete 
+from   DuplData 
+where  id in 
+( 
+  select   max ( Id ) [MaxId]
+  from     DuplData
+  group by FullName
+  having   count(*) > 1 
+)
+-- Table 'DuplData'. Scan count 1, logical reads 8, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+
+
+select * from DuplData;
+
+set statistics io off
+----------------------------------------------------------------------------------------------------
 -- 
 ----------------------------------------------------------------------------------------------------
