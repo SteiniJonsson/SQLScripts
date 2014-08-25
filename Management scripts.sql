@@ -250,3 +250,32 @@ from #dbsize d join #logsize l
 on d.Dbname=l.Dbname join #dbfreesize fs  
 on d.Dbname=fs.name 
 order by Dbname 
+
+
+----------------------------------------------------------------------------------------------------
+-- List all tables, with name, row count and space used
+----------------------------------------------------------------------------------------------------
+with cte as
+(
+  select   s.Name + '.' + t.name                     [Tablename]
+        ,  p.rows                                    [Row count]
+        ,  ( sum ( a.total_pages ) * 8 ) / 1024.0    [Total space in MB] 
+        ,  ( sum ( a.used_pages ) * 8  ) / 1024.0    [Used space in KB] 
+        ,  ( ( sum ( a.total_pages ) - 
+               sum ( a.used_pages ) ) * 8 ) / 1024.0 [Unused space in KB]
+  from     sys.tables           t
+  join     sys.schemas          s on  s.schema_id = t.schema_id
+  join     sys.indexes          i on  t.object_id = i.object_id
+  join     sys.partitions       p on  i.object_id = p.object_id 
+                                  and i.index_id = p.index_id
+  join     sys.allocation_units a on p.partition_id = a.container_id
+  where    t.is_ms_shipped = 0
+  and      t.name not like 'dt%' 
+  and      i.object_id > 255 
+  group by t.Name
+         , s.Name
+         , p.Rows
+)
+select *
+from   cte
+order by Tablename
