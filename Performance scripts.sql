@@ -91,5 +91,23 @@ select * from DuplData;
 
 set statistics io off
 ----------------------------------------------------------------------------------------------------
+-- Script from Paul Randal (incomplete)
+----------------------------------------------------------------------------------------------------
+select *
+from   sys.dm_db_index_usage_stats
+
+
+select      object_name ( ips.object_id ) as 'Object name',
+            si.name as 'Index Name',
+            round ( ips.avg_fragmentation_in_percent, 2 ) as 'Fragmentation',
+            ips.page_count as 'Pages',
+            round ( ips.avg_page_space_used_in_percent, 2 ) as 'Page Density'
+from        sys.dm_db_index_physical_stats ( db_id ( 'Steini' ), null, null, null, 'detailed' ) ips
+cross apply sys.indexes si
+where       si.object_id = ips.object_id
+and         si.index_id = ips.index_id
+and         ips.index_level = 0
+
+----------------------------------------------------------------------------------------------------
 -- 
 ----------------------------------------------------------------------------------------------------
