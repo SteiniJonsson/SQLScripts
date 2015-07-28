@@ -350,6 +350,34 @@ from   cte
 order by Tablename
 
 ----------------------------------------------------------------------------------------------------
+-- Finding Tables with Nonclustered Primary Keys and no Clustered Index
+--   http://www.brentozar.com/archive/2015/07/finding-tables-with-nonclustered-primary-keys-and-no-clustered-index/
+----------------------------------------------------------------------------------------------------
+set transaction isolation level read uncommitted;
+
+select     quotename ( schema_name ( [t].[schema_id] ) ) + '.' + quotename ( [t].[name] )  [Table]
+         , quotename ( object_name ( [kc].[object_id] ) )                                  [IndexName]
+         , cast ( ( sum ( [a].[total_pages] ) * 8 / 1024.0 ) as decimal ( 18, 2 ) )        [IndexSizeMB]
+from       [sys].[tables]           [t]
+inner join [sys].[indexes]          [i] on  [t].[object_id] = [i].[object_id]
+inner join [sys].[partitions]       [p] on  [i].[object_id] = [p].[object_id]
+                                        and [i].[index_id] = [p].[index_id]
+inner join [sys].[allocation_units] [a] on [a].[container_id] = case 
+                                                                  when [a].[type] IN ( 1, 3 ) then [p].[hobt_id]
+                                                                  when [a].[type] = 2 then [p].[partition_id]
+                                                                end
+inner join [sys].[key_constraints]  [kc] on [t].[object_id] = [kc].[parent_object_id]
+where      [i].[name] is not null
+and        objectproperty ( [kc].[object_id], 'CnstIsNonclustKey' ) = 1 --Unique Constraint or Primary Key can qualify
+and        objectproperty ( [t].[object_id], 'TableHasClustIndex' ) = 0 --Make sure there's no Clustered Index, this is a valid design choice
+and        objectproperty ( [t].[object_id], 'TableHasPrimaryKey' ) = 1 --Make sure it has a Primary Key and it's not just a Unique Constraint
+and        objectproperty ( [t].[object_id], 'IsUserTable' ) = 1        --Make sure it's a user table because whatever, why not? We've come this far
+group by   [t].[schema_id]
+         , [t].[name]
+         , object_name ( [kc].[object_id] )
+order by   sum ( [a].[total_pages] ) * 8 / 1024.0 desc;
+
+----------------------------------------------------------------------------------------------------
 --
 --
 ----------------------------------------------------------------------------------------------------
