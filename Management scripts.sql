@@ -378,6 +378,27 @@ group by   [t].[schema_id]
 order by   sum ( [a].[total_pages] ) * 8 / 1024.0 desc;
 
 ----------------------------------------------------------------------------------------------------
+-- Query for job history
+----------------------------------------------------------------------------------------------------
+select j.[name]
+     , h.[step_id]
+     , h.[step_name]
+     , h.[message]
+     , h.[run_status]
+     , case h.[run_status]
+         when 0 then 'Failed'
+         when 1 then 'Succseeded'
+         when 2 then 'Retry'
+         when 3 then 'Canceled'
+       end                  [run_status_description]
+     , h.[run_date]
+     , h.[run_time]
+     , h.[run_duration]
+from   msdb..sysjobs j
+join   msdb..sysjobhistory h on j.job_id = h.job_id
+where  j.name in ( 'DW - Load STGVoruhus', 'DW - Process Motus SSAS' )
+order by j.name, h.run_date, h.step_id
+----------------------------------------------------------------------------------------------------
 --
 --
 ----------------------------------------------------------------------------------------------------
